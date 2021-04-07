@@ -27,6 +27,8 @@ public class Controller extends Application {
     @FXML
     private TextArea plainText;
 
+    @FXML
+    private TextArea generatedKey;
 
     private Window window;
 
@@ -67,7 +69,10 @@ public class Controller extends Application {
     void encrypt() {
         if (!isFieldsCorrect(true)) return;
         Encryptor encryptor = new Encryptor();
-        BitArray result = encryptor.encrypt(new BitArray(keyArea.getText()), new BitArray(plainText.getText()));
+        BitArray text = new BitArray(plainText.getText());
+        BitArray genKey = Encryptor.generateKey(new BitArray(keyArea.getText()), text.toString().length());
+        generatedKey.setText(new StringBuilder(genKey.toString()).reverse().toString());
+        BitArray result = encryptor.encrypt(text, genKey);
         String resText = new StringBuilder(result.toString()).reverse().toString();
         cipherText.setText(resText);
     }
@@ -76,7 +81,10 @@ public class Controller extends Application {
     void decrypt() {
         if (!isFieldsCorrect(false)) return;
         Encryptor encryptor = new Encryptor();
-        BitArray result = encryptor.encrypt(new BitArray(keyArea.getText()), new BitArray(cipherText.getText()));
+        BitArray text = new BitArray(cipherText.getText());
+        BitArray genKey = Encryptor.generateKey(new BitArray(keyArea.getText()), text.toString().length());
+        generatedKey.setText(new StringBuilder(genKey.toString()).reverse().toString());
+        BitArray result = encryptor.encrypt(text, genKey);
         String resText = new StringBuilder(result.toString()).reverse().toString();
         plainText.setText(resText);
     }
@@ -117,6 +125,7 @@ public class Controller extends Application {
     private void clearTextAreas() {
         cipherText.clear();
         plainText.clear();
+        generatedKey.clear();
     }
 
     private boolean isFieldsCorrect(boolean encrypt)
@@ -137,12 +146,17 @@ public class Controller extends Application {
         }
 
         if (textArea.getText().length() == 0) {
-            showAlert("Error", "Input field is empty.");
+            showAlert("Error", "Input field, " + areaName + " is empty.");
             return false;
         }
 
         if (!BitArray.checkBinaryStr(keyArea.getText())) {
             showAlert("Incorrect key", "Key should consists of 0 and 1");
+            return false;
+        }
+
+        if (textArea.getText().length() % 8 != 0) {
+            showAlert("Incorrect text", "The number of bits must be a multiple of 8");
             return false;
         }
 
